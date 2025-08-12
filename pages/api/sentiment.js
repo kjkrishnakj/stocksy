@@ -22,6 +22,10 @@ function extractCompany(prompt) {
   if (match && match[1]) {
     return match[1].trim();
   }
+  const words = prompt.trim().split(/\s+/);
+  if (words.length > 0) {
+    return words[words.length - 1];
+  }
   return null;
 }
 
@@ -30,37 +34,30 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
 
   const { prompt } = req.body;
+
   if (!prompt) return res.status(400).json({ error: "Prompt is required" });
 
   const company = extractCompany(prompt);
+
   if (!company)
-    return res
-      .status(400)
-      .json({ error: "Could not extract company name or symbol" });
+    return res.status(400).json({ error: "Could not extract company name or symbol" });
 
   try {
-    // Fetch news articles
-    const newsRes = await axios.get(
-      "https://newsapi.org/v2/everything",
-      {
-        params: {
-          q: company,
-          language: "en",
-          sortBy: "relevance",
-          pageSize: 5,
-          apiKey: NEWSAPI_KEY,
-        },
-      }
-    );
+    const newsRes = await axios.get("https://newsapi.org/v2/everything", {
+      params: {
+        q: company,
+        language: "en",
+        sortBy: "relevance",
+        pageSize: 5,
+        apiKey: NEWSAPI_KEY,
+      },
+    });
 
     const articles = newsRes.data.articles;
     if (!articles || articles.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "No recent news found for this company" });
+      return res.status(404).json({ error: `No recent news found for "${company}".` });
     }
 
-    // Analyze sentiment for each headline
     const sentiments = [];
 
     for (const article of articles) {
@@ -76,12 +73,10 @@ export default async function handler(req, res) {
         }
       );
 
-      const result = hfRes.data[0];
-      let label = result.label.toLowerCase();
+      const result = Array.isArray(hfRes.data) ? hfRes.data[0] : hfRes.data;
+      let label = result?.label?.toLowerCase() || "neutral";
 
-      if (label === "positive") label = "positive";
-      else if (label === "negative") label = "negative";
-      else label = "neutral";
+      if (label !== "positive" && label !== "negative") label = "neutral";
 
       sentiments.push(label);
     }
@@ -89,7 +84,8 @@ export default async function handler(req, res) {
     const action = decideAction(sentiments);
 
     res.status(200).json({
-      sentiment: action === "Buy" ? "positive" : action === "Sell" ? "negative" : "neutral",
+      sentiment:
+        action === "Buy" ? "positive" : action === "Sell" ? "negative" : "neutral",
       action,
       reason: `Based on sentiment analysis of ${articles.length} recent news headlines for "${company}".`,
       news: articles.map((a) => ({
@@ -98,6 +94,9 @@ export default async function handler(req, res) {
       })),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message || "Error processing request" });
+    console.error("Error in /api/sentiment:", error.response?.data || error.message);
+    res.status(500).json({
+      error: error.response?.data?.error || error.message || "Error processing request",
+    });
   }
 }

@@ -3,14 +3,39 @@ import axios from "axios";
 const TWELVE_DATA_KEY = process.env.TWELVE_DATA_KEY;
 
 const symbolMap = {
-  TESLA: "TSLA",
-  APPLE: "AAPL",
-  MICROSOFT: "MSFT",
-  GOOGLE: "GOOGL",
-  AMAZON: "AMZN",
-  NVIDIA: "NVDA",
-  META: "META",
-  NETFLIX: "NFLX",
+ TESLA: "TSLA",
+APPLE: "AAPL",
+MICROSOFT: "MSFT",
+GOOGLE: "GOOGL",
+AMAZON: "AMZN",
+NVIDIA: "NVDA",
+META: "META",
+NETFLIX: "NFLX",
+DELL: "DELL",
+BROADCOM: "AVGO",
+TSMC: "TSMC",
+JPMORGAN: "JPM",
+ORACLE: "ORCL",
+WALMART: "WMT",
+DISNEY: "DIS",
+ALIBABA: "BABA",
+COCA_COLA: "KO",
+PFIZER: "PFE",
+VISA: "V",
+MASTERCARD: "MA",
+INTEL: "INTC",
+CISCO: "CSCO",
+BANK_OF_AMERICA: "BAC",
+PEPSICO: "PEP",
+ADOBE: "ADBE",
+NETEASE: "NTES",
+QUALCOMM: "QCOM",
+IBM: "IBM",
+AMD: "AMD",
+PAYPAL: "PYPL",
+SHOPIFY: "SHOP"
+
+
 };
 
 function parseQuery(query) {
@@ -34,7 +59,7 @@ function parseQuery(query) {
   const timeMatch = query.match(/(\d+)\s*(day|week|month|year)s?/i);
   let days = 30;
   if (timeMatch) {
-    const n = parseInt(timeMatch[1]);
+  const n = parseInt(timeMatch[1]);
     const unit = timeMatch[2].toLowerCase();
     if (unit.includes("day")) days = n;
     else if (unit.includes("week")) days = n * 7;
